@@ -6,6 +6,7 @@ import io.ebean.annotation.WhenCreated;
 import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,13 +36,14 @@ public class Customer extends Model{
   @Column(length=20)
   private String mobile;
 
-  private String dob;
+  @Column(name="dob")
+  private LocalDate dob;
 
   @WhenCreated
   @Column(name="created_at",updatable=false)
   private Timestamp created;
 
-  public Customer(Long fileUploadId, String name, String email, String mobile,String dob) {
+  public Customer(Long fileUploadId, String name, String email, String mobile,LocalDate dob) {
     this.fileUploadId = fileUploadId;
     this.name = name;
     this.email = email;

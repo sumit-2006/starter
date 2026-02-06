@@ -44,6 +44,7 @@ dependencies {
   annotationProcessor ("io.ebean:querybean-generator:17.2.1")
   compileOnly("org.projectlombok:lombok:1.18.42")
   annotationProcessor("org.projectlombok:lombok:1.18.42")
+  implementation("com.mysql:mysql-connector-j:8.3.0")
 }
 
 java {

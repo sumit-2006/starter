@@ -22,7 +22,7 @@ public class FileUpload extends Model {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name = "file_name", length = 255)
+  @Column(name = "filename", length = 255)
   private String fileName;
 
   @Enumerated(EnumType.STRING)
@@ -32,10 +32,10 @@ public class FileUpload extends Model {
   @Column(name = "total_records")
   private Integer totalRecords;
 
-  @Column(name = "failure_records")
+  @Column(name = "failure_count")
   private Integer failureRecords;
 
-  @Column(name = "success_records")
+  @Column(name = "success_count")
   private Integer successRecords;
 
   @WhenCreated
@@ -46,9 +46,6 @@ public class FileUpload extends Model {
   @Column(name = "updated_at")
   private Instant updatedAt;
 
-  @Lob
-  @Column(name = "file_content")
-  @Basic(fetch = FetchType.LAZY)
-  private byte[] content;
+
 
 }

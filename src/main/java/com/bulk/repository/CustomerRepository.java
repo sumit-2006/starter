@@ -1,6 +1,7 @@
 package com.bulk.repository;
 
 import com.bulk.entity.Customer;
+import com.bulk.entity.UploadError;
 import io.ebean.DB;
 import io.ebean.Transaction;
 
@@ -20,7 +21,7 @@ public class CustomerRepository {
     }
   }
 
-  public void saveErrors(List<Customer> errors) {
+  public void saveErrors(List<UploadError> errors) {
     if(errors.isEmpty()) return;
     DB.saveAll(errors);
   }
