@@ -1,10 +1,7 @@
 package com.bulk.entity;
 
 import io.ebean.Model;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -15,8 +12,10 @@ import lombok.NoArgsConstructor;
 public class FileContent extends Model {
 
   @Id
+  @Column(name="file_upload_id")
   public Long fileUploadId;
 
   @Lob
+  @Column(name="raw_csv_content",columnDefinition = "LONGTEXT")
   public String rawCsvContent;
 }

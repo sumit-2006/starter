@@ -14,7 +14,6 @@ public class CustomerRepository {
       tx.setBatchMode(true);
       tx.setBatchSize(1000);
       tx.setGetGeneratedKeys(false);
-
       DB.saveAll(customers);
 
       tx.commit();

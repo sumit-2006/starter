@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @Table(name = "upload_errors")
@@ -32,7 +34,7 @@ public class UploadError extends Model {
 
   @WhenCreated
   @Column(name="created_at")
-  private Long createdAt;
+  private Instant createdAt;
 
   public UploadError(Long fileUploadId, String errorMessage, Integer rowNumber, String rawData) {
     this.fileUploadId = fileUploadId;

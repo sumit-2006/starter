@@ -35,16 +35,20 @@ public class FileUploadRepository {
   }
 
   public void updateStatus(Long id, Status status, int success, int failure) {
-    FileUpload file= DB.find(FileUpload.class,id);
-    if (file!=null) {
-      file.setStatus(status);
-      file.setSuccessRecords(success);
-      file.setFailureRecords(failure);
-      file.save();
-    }
+    DB.update(FileUpload.class)
+      .set("status", status)
+      .set("successRecords", success)
+      .set("failureRecords", failure)
+      .where().idEq(id)
+      .update();
   }
   public String getContent(Long fileUploadId) {
     FileContent fc = DB.find(FileContent.class, fileUploadId);
     return (fc != null) ? fc.rawCsvContent : null;
   }
+  public FileUpload findById(Long id)
+  {
+    return DB.find(FileUpload.class, id);
+  }
+
 }
