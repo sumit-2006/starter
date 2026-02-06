@@ -28,7 +28,6 @@ public class ValidationUtil {
     LocalDate dob = null;
     if (data.length > 3 && !data[3].trim().isEmpty()) {
       try {
-        // Default format expected: YYYY-MM-DD
         dob = LocalDate.parse(data[3].trim());
       } catch (DateTimeParseException e) {
         return new RowResult(new UploadError(fileId, "Invalid Date Format (Expected YYYY-MM-DD)", rowNum, line));
@@ -48,7 +47,6 @@ public class ValidationUtil {
     }
 
     Customer customer = new Customer(fileId, name, email, mobile,dob);
-    customer.setCreated(new java.sql.Timestamp(System.currentTimeMillis()));
     return new RowResult(customer);
   }
 }

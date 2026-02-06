@@ -41,7 +41,7 @@ public class Customer extends Model{
 
   @WhenCreated
   @Column(name="created_at",updatable=false)
-  private Timestamp created;
+  private Instant created;
 
   public Customer(Long fileUploadId, String name, String email, String mobile,LocalDate dob) {
     this.fileUploadId = fileUploadId;
