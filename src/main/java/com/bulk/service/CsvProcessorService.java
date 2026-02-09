@@ -155,9 +155,11 @@ return fileUploadId;
         if (csvContent == null) {
           System.out.println("Attempt " + (attempts+1) + ": Content not found yet for ID " + fileId + ". Retrying...");
           attempts++;
-          try { Thread.sleep(5000); } catch (InterruptedException e) {}
+          //try { Thread.sleep(5000); } catch (InterruptedException e) {}
         }
       }
+
+
 
 
       if (csvContent == null || csvContent.isEmpty()) {
@@ -177,7 +179,7 @@ return fileUploadId;
 
         while ((line = reader.readLine()) != null) {
           rowNum++;
-          try { Thread.sleep(10); } catch (Exception e) {}
+          //try { Thread.sleep(10); } catch (Exception e) {}
 
           RowResult result = ValidationUtil.validateAndMap(fileId, rowNum, line);
           if (result == null) continue;
@@ -194,10 +196,41 @@ return fileUploadId;
         }
       }
 
-      if (!validCustomers.isEmpty()) customerRepository.saveBatch(validCustomers);
+      int savedCount = 0;
+      if (!validCustomers.isEmpty()) {
+        List<String> incomingEmails = validCustomers.stream()
+          .map(Customer::getEmail)
+          .toList();
+
+        java.util.Set<String> existingEmails = customerRepository.findExistingEmails(incomingEmails);
+
+        List<Customer> newCustomers = validCustomers.stream()
+          .filter(c -> !existingEmails.contains(c.getEmail()))
+          .toList();
+
+        if (!newCustomers.isEmpty()) {
+          customerRepository.saveBatch(newCustomers);
+          savedCount = newCustomers.size();
+          System.out.println("Saved " + savedCount + " new customers. Ignored " + existingEmails.size() + " duplicates.");
+        } else {
+          System.out.println("All customers were duplicates. Nothing saved.");
+        }
+      }
+
       if (!errorRows.isEmpty()) customerRepository.saveErrors(errorRows);
 
       Status finalStatus = errorRows.isEmpty() ? Status.COMPLETED :
+        (savedCount == 0 ? Status.FAILED : Status.PARTIAL_SUCCESS);
+
+      fileUploadRepository.updateStatus(fileId, finalStatus, savedCount, errorRows.size());
+
+      System.out.println("Finished processing File ID: " + fileId);
+
+
+      //if (!validCustomers.isEmpty()) customerRepository.saveBatch(validCustomers);
+      if (!errorRows.isEmpty()) customerRepository.saveErrors(errorRows);
+
+      finalStatus = errorRows.isEmpty() ? Status.COMPLETED :
         (validCustomers.isEmpty() ? Status.FAILED : Status.PARTIAL_SUCCESS);
 
       fileUploadRepository.updateStatus(fileId, finalStatus, validCustomers.size(), errorRows.size());
