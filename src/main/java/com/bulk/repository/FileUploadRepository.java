@@ -9,7 +9,7 @@ import io.ebean.Transaction;
 import java.nio.charset.StandardCharsets;
 
 public class FileUploadRepository {
-  public FileUpload create(String fileName, byte[] fileContent) {
+  /*public FileUpload create(String fileName, byte[] fileContent) {
     String contentString =new String(fileContent, StandardCharsets.UTF_8);
 
     try(Transaction transaction=DB.beginTransaction()) {
@@ -32,6 +32,36 @@ public class FileUploadRepository {
         throw e;
       }
     }
+  } */
+
+
+
+  public FileUpload create(String fileName, byte[] fileContent) {
+    String contentString = new String(fileContent, StandardCharsets.UTF_8);
+
+    long totalLines = contentString.lines().count();
+    int totalRecords = (int) Math.max(0, totalLines - 1);
+
+    try (Transaction transaction = DB.beginTransaction()) {
+      try {
+        FileUpload fileUpload = new FileUpload();
+        fileUpload.setFileName(fileName);
+        fileUpload.setStatus(Status.PENDING);
+        fileUpload.setTotalRecords(totalRecords);
+        fileUpload.setSuccessRecords(0);
+        fileUpload.setFailureRecords(0);
+        fileUpload.save();
+        FileContent content = new FileContent(fileUpload.getId(), contentString);
+        DB.insert(content);
+
+        transaction.commit();
+        return fileUpload;
+
+      } catch (Exception e) {
+        transaction.rollback();
+        throw e;
+      }
+    }
   }
 
   public void updateStatus(Long id, Status status, int success, int failure) {
@@ -42,8 +72,18 @@ public class FileUploadRepository {
       .where().idEq(id)
       .update();
   }
-  public String getContent(Long fileUploadId) {
+  /*public String getContent(Long fileUploadId) {
     FileContent fc = DB.find(FileContent.class, fileUploadId);
+    return (fc != null) ? fc.rawCsvContent : null;
+  }*/
+
+
+  public String getContent(Long fileUploadId) {
+    FileContent fc = DB.find(FileContent.class)
+      .select("rawCsvContent")
+      .setId(fileUploadId)
+      .findOne();
+
     return (fc != null) ? fc.rawCsvContent : null;
   }
   public FileUpload findById(Long id)

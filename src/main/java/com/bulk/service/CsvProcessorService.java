@@ -103,7 +103,7 @@ return fileUploadId;
     }
   }*/
 
-  public Long saveFile(String filename, InputStream inputStream) {
+  /*public Long saveFile(String filename, InputStream inputStream) {
     try {
       byte[] fileBytes = inputStream.readAllBytes();
       if (fileBytes.length == 0) throw new RuntimeException("Empty File");
@@ -119,6 +119,23 @@ return fileUploadId;
 
       fileUpload.setTotalRecords(totalRecords);
       io.ebean.DB.save(fileUpload);
+
+      return fileUpload.getId();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return -1L;
+    }
+  }*/
+
+
+
+  public Long saveFile(String filename, InputStream inputStream) {
+    try {
+      byte[] fileBytes = inputStream.readAllBytes();
+      if (fileBytes.length == 0) throw new RuntimeException("Empty File");
+
+      FileUpload fileUpload = fileUploadRepository.create(filename, fileBytes);
 
       return fileUpload.getId();
 
@@ -160,7 +177,7 @@ return fileUploadId;
 
         while ((line = reader.readLine()) != null) {
           rowNum++;
-          // try { Thread.sleep(10); } catch (Exception e) {}
+          try { Thread.sleep(10); } catch (Exception e) {}
 
           RowResult result = ValidationUtil.validateAndMap(fileId, rowNum, line);
           if (result == null) continue;
