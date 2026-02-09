@@ -130,13 +130,24 @@ return fileUploadId;
 
   public void processFileById(Long fileId) {
     try {
-      String csvContent = fileUploadRepository.getContent(fileId);
-      if (csvContent == null || csvContent.isEmpty()) {
-        System.err.println("File content NOT FOUND for ID: " + fileId + ". Marking as FAILED.");
-        fileUploadRepository.updateStatus(fileId, Status.FAILED, 0, 0); // <--- STOP THE UI SPINNER
-        return;
+      String csvContent = null;
+      int attempts = 0;
+
+      while (csvContent == null && attempts < 5) {
+        csvContent = fileUploadRepository.getContent(fileId);
+        if (csvContent == null) {
+          System.out.println("Attempt " + (attempts+1) + ": Content not found yet for ID " + fileId + ". Retrying...");
+          attempts++;
+          try { Thread.sleep(5000); } catch (InterruptedException e) {}
+        }
       }
 
+
+      if (csvContent == null || csvContent.isEmpty()) {
+        System.err.println("FATAL: File content still NOT FOUND for ID: " + fileId + " after retries.");
+        fileUploadRepository.updateStatus(fileId, Status.FAILED, 0, 0);
+        return;
+      }
       fileUploadRepository.updateStatus(fileId, Status.PROCESSING, 0, 0);
 
       List<Customer> validCustomers = new ArrayList<>();

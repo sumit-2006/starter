@@ -30,7 +30,6 @@ public class MainVerticle extends VerticleBase {
     CustomerRepository customerRepository = new CustomerRepository();
     CsvProcessorService csvProcessorService = new CsvProcessorService(vertx, fileUploadRepository, customerRepository);
 
-    // 1. Start RabbitMQ Client for the Publisher
     rabbitClient = RabbitMQClient.create(vertx, RabbitMQConfig.getOptions());
     rabbitClient.start().onSuccess(v -> System.out.println("MainVerticle connected to RabbitMQ"));
 
@@ -88,28 +87,22 @@ public class MainVerticle extends VerticleBase {
 
       JsonArray responseData = new JsonArray();
 
-      // We use a List of Futures to track when ALL files are processed
       java.util.List<Future<Void>> futures = new java.util.ArrayList<>();
 
       for (io.vertx.ext.web.FileUpload f : ctx.fileUploads()) {
 
-        // 1. Wrap Heavy Work in executeBlocking
         Future<Void> fileFuture = vertx.executeBlocking(() -> {
           try {
-            // BLOCKING CODE GOES HERE (Safe now!)
             Buffer fileBuffer = vertx.fileSystem().readFileBlocking(f.uploadedFileName());
             ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBuffer.getBytes());
 
-            // Save to DB
             Long id = csvProcessorService.saveFile(f.fileName(), inputStream);
 
-            // Pass ID to next step
             return id;
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
         }).compose(id -> {
-          // 2. BACK ON EVENT LOOP: Send to RabbitMQ
           if (id != -1L) {
             responseData.add(new JsonObject().put("fileName", f.fileName()).put("id", id));
 
@@ -123,7 +116,6 @@ public class MainVerticle extends VerticleBase {
         futures.add(fileFuture);
       }
 
-      // 3. When ALL files are queued, send response to Frontend
       Future.all(futures)
         .onSuccess(v -> ctx.json(responseData))
         .onFailure(err -> ctx.response().setStatusCode(500).end("Upload failed: " + err.getMessage()));
