@@ -28,9 +28,10 @@ public class MainVerticle extends VerticleBase {
   public Future<?> start() {
     FileUploadRepository fileUploadRepository = new FileUploadRepository();
     CustomerRepository customerRepository = new CustomerRepository();
-    CsvProcessorService csvProcessorService = new CsvProcessorService(vertx, fileUploadRepository, customerRepository);
-
     rabbitClient = RabbitMQClient.create(vertx, RabbitMQConfig.getOptions());
+
+    CsvProcessorService csvProcessorService = new CsvProcessorService(vertx, fileUploadRepository, customerRepository,rabbitClient);
+
     rabbitClient.start().onSuccess(v -> System.out.println("MainVerticle connected to RabbitMQ"));
 
     Router router = Router.router(vertx);
@@ -130,6 +131,10 @@ public class MainVerticle extends VerticleBase {
       }
     });
     router.route("/*").handler(StaticHandler.create());
+
+
+    String portEnv = System.getenv("PORT");
+    int port = (portEnv != null && !portEnv.isEmpty()) ? Integer.parseInt(portEnv) : 8080;
 
     return rabbitClient.start()
       .compose(v -> {

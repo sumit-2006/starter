@@ -17,9 +17,10 @@ public class WorkerVerticle extends AbstractVerticle {
   public void start(Promise<Void> startPromise) {
     FileUploadRepository fileRepo = new FileUploadRepository();
     CustomerRepository customerRepo = new CustomerRepository();
-    csvProcessorService = new CsvProcessorService(vertx, fileRepo, customerRepo);
-
     client = RabbitMQClient.create(vertx, RabbitMQConfig.getOptions());
+    csvProcessorService = new CsvProcessorService(vertx, fileRepo, customerRepo,client);
+
+
 
     client.start()
       .compose(v -> {

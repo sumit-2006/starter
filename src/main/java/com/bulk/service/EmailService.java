@@ -5,9 +5,9 @@ import io.vertx.ext.mail.MailClient;
 import io.vertx.ext.mail.MailConfig;
 import io.vertx.ext.mail.MailMessage;
 import io.vertx.ext.mail.StartTLSOptions;
+import io.vertx.core.json.JsonObject;
 
 public class EmailService {
-
   private final MailClient mailClient;
 
   public EmailService(Vertx vertx) {
@@ -27,37 +27,35 @@ public class EmailService {
     this.mailClient = MailClient.createShared(vertx, config);
   }
 
-  public void sendCompletionEmail(String recipient, String fileName, String status, int success, int failure) {
-    if (recipient == null || recipient.isEmpty()) {
-      System.out.println("No recipient email provided, skipping notification.");
-      return;
-    }
+  public void sendEmailFromJson(JsonObject emailData) {
+    String recipient = emailData.getString("recipient");
+    if (recipient == null || recipient.isEmpty()) return;
 
     MailMessage message = new MailMessage();
     message.setFrom("no-reply@bulkprocessor.com");
     message.setTo(recipient);
-    message.setSubject("File Processing Complete: " + fileName);
+    message.setSubject("File Processing Complete: File #" + emailData.getLong("fileId"));
 
     String htmlBody = String.format(
       "<h3>Processing Complete</h3>" +
-        "<p><b>File:</b> %s</p>" +
         "<p><b>Status:</b> %s</p>" +
         "<ul>" +
         "<li><b>Success Records:</b> %d</li>" +
         "<li><b>Failed Records:</b> %d</li>" +
         "</ul>",
-      fileName, status, success, failure
+      emailData.getString("status"),
+      emailData.getInteger("success"),
+      emailData.getInteger("failure")
     );
 
     message.setHtml(htmlBody);
 
-    mailClient.sendMail(message, result -> {
-      if (result.succeeded()) {
+    mailClient.sendMail(message)
+      .onSuccess(result -> {
         System.out.println("Email sent successfully to " + recipient);
-      } else {
-        System.err.println("Failed to send email: " + result.cause().getMessage());
-        result.cause().printStackTrace();
-      }
-    });
+      })
+      .onFailure(err -> {
+        System.err.println("Failed to send email: " + err.getMessage());
+      });
   }
 }

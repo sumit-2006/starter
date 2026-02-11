@@ -18,16 +18,20 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import io.vertx.core.json.JsonObject;
+import io.vertx.rabbitmq.RabbitMQClient;
 
 public class CsvProcessorService {
   private final Vertx vertx;
   private final CustomerRepository customerRepository;
   private final FileUploadRepository fileUploadRepository;
+  private final RabbitMQClient rabbitClient;
 
-  public CsvProcessorService(Vertx vertx, FileUploadRepository fileUploadRepository, CustomerRepository customerRepository) {
+  public CsvProcessorService(Vertx vertx, FileUploadRepository fileUploadRepository, CustomerRepository customerRepository, RabbitMQClient rabbitClient) {
     this.vertx = vertx;
     this.customerRepository = customerRepository;
     this.fileUploadRepository = fileUploadRepository;
+    this.rabbitClient = rabbitClient;
   }
 
   /*public Long processFile(String filename, InputStream inputStream) {
@@ -236,6 +240,17 @@ return fileUploadId;
         (savedCount == 0 ? Status.FAILED : Status.PARTIAL_SUCCESS);
       fileUploadRepository.updateStatus(fileId, finalStatus, savedCount, errorRows.size());
       System.out.println("Finished processing File ID: " + fileId);
+      JsonObject emailTask = new JsonObject()
+        .put("fileId", fileId)
+        .put("recipient", System.getenv().getOrDefault("ADMIN_EMAIL", "your-email@gmail.com")) // Replace with your email for testing
+        .put("status", finalStatus.toString())
+        .put("success", savedCount)
+        .put("failure", errorRows.size());
+
+      rabbitClient.basicPublish("", "email_queue", io.vertx.core.buffer.Buffer.buffer(emailTask.encode()))
+        .onSuccess(v -> System.out.println("Email task pushed to queue for File ID: " + fileId))
+        .onFailure(err -> System.err.println("Failed to push email task: " + err.getMessage()));
+
 
 
 
