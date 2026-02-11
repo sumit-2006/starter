@@ -147,6 +147,19 @@ return fileUploadId;
 
   public void processFileById(Long fileId) {
     try {
+      FileUpload file = fileUploadRepository.findById(fileId);
+
+      if (file == null) {
+        System.err.println("FileUpload not found: " + fileId);
+        return;
+      }
+
+      if (file.getStatus() == Status.PROCESSING ||
+        file.getStatus() == Status.COMPLETED) {
+        System.out.println("Skipping already processed file: " + fileId);
+        return;
+      }
+
       String csvContent = null;
       int attempts = 0;
 
@@ -221,21 +234,11 @@ return fileUploadId;
 
       Status finalStatus = errorRows.isEmpty() ? Status.COMPLETED :
         (savedCount == 0 ? Status.FAILED : Status.PARTIAL_SUCCESS);
-
       fileUploadRepository.updateStatus(fileId, finalStatus, savedCount, errorRows.size());
-
       System.out.println("Finished processing File ID: " + fileId);
 
 
-      //if (!validCustomers.isEmpty()) customerRepository.saveBatch(validCustomers);
-      if (!errorRows.isEmpty()) customerRepository.saveErrors(errorRows);
 
-      finalStatus = errorRows.isEmpty() ? Status.COMPLETED :
-        (validCustomers.isEmpty() ? Status.FAILED : Status.PARTIAL_SUCCESS);
-
-      fileUploadRepository.updateStatus(fileId, finalStatus, validCustomers.size(), errorRows.size());
-
-      System.out.println("Finished processing File ID: " + fileId);
 
     } catch (Exception e) {
       e.printStackTrace();

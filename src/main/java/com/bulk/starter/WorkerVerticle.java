@@ -35,11 +35,25 @@ public class WorkerVerticle extends AbstractVerticle {
             Long fileId = Long.valueOf(message.body().toString());
             System.out.println("Worker received File ID: " + fileId);
 
-            csvProcessorService.processFileById(fileId);
-            long deliveryTag = message.envelope().getDeliveryTag();
 
-            client.basicAck(deliveryTag , false)
-              .onFailure(err -> System.err.println("Ack failed: " + err.getMessage()));
+                long deliveryTag = message.envelope().getDeliveryTag();
+
+                vertx.executeBlocking(() -> {
+                  csvProcessorService.processFileById(fileId);
+                  return null;
+                }).onComplete(ar -> {
+                  if (ar.succeeded()) {
+                    client.basicAck(deliveryTag, false);
+                  } else {
+                    client.basicNack(deliveryTag, false, false);
+                  }
+                });
+
+
+
+
+
+
 
           } catch (Exception e) {
             System.err.println("Error processing message: " + e.getMessage());

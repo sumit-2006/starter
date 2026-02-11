@@ -4,8 +4,9 @@ import io.vertx.rabbitmq.RabbitMQOptions;
 
 public class RabbitMQConfig {
   public static RabbitMQOptions getOptions() {
-    return new RabbitMQOptions()
-      .setUri("amqp://guest:guest@localhost:5672")
+    String host = System.getenv("RABBITMQ_HOST");
+    if (host == null) host = "localhost"; //default hai
+    return new RabbitMQOptions().setUri("amqp://guest:guest@" + host + ":5672")
       .setAutomaticRecoveryEnabled(true);
   }
 }
